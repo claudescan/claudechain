@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GROK CLI — AI Agent in Your Terminal</title>
+<meta name="description" content="A conversational AI CLI tool powered by Grok with intelligent text editor capabilities and tool usage. Try it live.">
+<meta property="og:title" content="GROK CLI — AI Agent in Your Terminal">
+<meta property="og:description" content="A conversational AI CLI tool powered by Grok. Try the live console.">
+<meta property="og:image" content="/logo.png">
+<meta property="og:url" content="https://grokcli.bot">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:site" content="@GrokAdams">
+<link rel="icon" type="image/png" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-deep:#0a0e14;--bg-pri:#0d1117;--bg-srf:#131920;--bg-elv:#161b22;--bg-hov:#1c2333;
+  --brd-dim:rgba(139,148,158,.08);--brd-sub:rgba(139,148,158,.12);
+  --mag:#c850c0;--mag-b:#e070d8;--mag-d:#9a3d94;--mag-g:rgba(200,80,192,.15);
+  --cy:#4fc3f7;--cy-b:#80d8ff;--cy-d:#2a8ab8;--cy-g:rgba(79,195,247,.15);
+  --grn:#00e676;--ylw:#ffd740;--orn:#ffab40;
+  --t1:#e6edf3;--t2:#8b949e;--t3:#5a6370;--t4:#3d4450;
+  --grad:linear-gradient(135deg,var(--mag),var(--cy));
+  --grad-h:linear-gradient(90deg,var(--mag),var(--cy));
+  --sb-w:230px;--mono:'JetBrains Mono',monospace;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--mono);background:var(--bg-pri);color:var(--t1);overflow-x:hidden;min-height:100vh}
+::selection{background:var(--mag);color:#fff}
+
+/* CRT */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);pointer-events:none;z-index:9999}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.3) 100%);pointer-events:none;z-index:9998}
+.glitch-bar{position:fixed;left:0;width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--mag),var(--cy),transparent);z-index:9996;pointer-events:none;opacity:0;animation:gsweep 8s ease-in-out infinite}
+@keyframes gsweep{0%,82%,100%{opacity:0;top:-1px}84%{opacity:.4;top:20%}86%{opacity:0}88%{opacity:.3;top:55%}90%{opacity:0}}
+.top-accent{position:fixed;top:0;left:0;right:0;height:2px;background:var(--grad-h);z-index:200}
+
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg-deep)}::-webkit-scrollbar-thumb{background:var(--mag-d);border-radius:3px}
+
+/* ═══ SIDEBAR ═══ */
+.sidebar{position:fixed;top:0;left:0;width:var(--sb-w);height:100vh;background:var(--bg-deep);border-right:1px solid var(--brd-dim);display:flex;flex-direction:column;z-index:1000;overflow-y:auto}
+.sb-hdr{padding:20px 18px 16px;border-bottom:1px solid var(--brd-dim);display:flex;align-items:center;gap:10px}
+.sb-hdr img{width:32px;height:32px;image-rendering:pixelated;border-radius:4px}
+.sb-logo{font-size:1.4rem;font-weight:700;letter-spacing:.12em;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.sb-logo small{display:block;font-size:.42rem;font-weight:500;letter-spacing:.25em;text-transform:uppercase;-webkit-text-fill-color:var(--t3);margin-top:3px}
+.sb-nav{flex:1;padding:8px 0}
+.sb-nav a{display:flex;align-items:center;gap:10px;padding:10px 18px;color:var(--t3);text-decoration:none;font-size:.68rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border-left:2px solid transparent;transition:all .15s;cursor:pointer}
+.sb-nav a:hover,.sb-nav a.active{color:var(--t1);background:var(--mag-g);border-left-color:var(--mag)}
+.sb-nav a .ico{width:18px;text-align:center;font-size:.8rem}
+.sb-nav a .dot{margin-left:auto;width:5px;height:5px;border-radius:50%;background:var(--mag);opacity:0;transition:opacity .15s}
+.sb-nav a:hover .dot,.sb-nav a.active .dot{opacity:1}
+.sb-foot{padding:12px 18px;border-top:1px solid var(--brd-dim);display:flex;gap:12px;flex-wrap:wrap}
+.sb-foot a{color:var(--t4);text-decoration:none;font-size:.52rem;transition:color .15s}
+.sb-foot a:hover{color:var(--cy)}
+.sb-status{padding:8px 18px;font-size:.5rem;color:var(--t3)}
+.sb-status .on{color:var(--grn)}.sb-status .off{color:var(--orn)}
+
+/* Mobile */
+.mob-tog{display:none;position:fixed;top:10px;left:10px;z-index:1100;width:38px;height:38px;background:var(--bg-deep);border:1px solid var(--brd-sub);border-radius:6px;cursor:pointer;align-items:center;justify-content:center;flex-direction:column;gap:4px}
+.mob-tog span{width:18px;height:2px;background:var(--mag)}
+
+/* ═══ MAIN ═══ */
+.main{margin-left:var(--sb-w);min-height:100vh}
+
+/* ═══ PAGES ═══ */
+.page{display:none}.page.active{display:block}
+
+/* ═══ HERO ═══ */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:80px 56px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-30%;right:-15%;width:600px;height:600px;background:radial-gradient(circle,rgba(200,80,192,.06) 0%,transparent 65%);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-20%;left:-10%;width:500px;height:500px;background:radial-gradient(circle,rgba(79,195,247,.04) 0%,transparent 65%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 14px;background:var(--bg-elv);border:1px solid var(--brd-sub);border-radius:3px;color:var(--cy);font-size:.58rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;margin-bottom:28px;width:fit-content;animation:fadeUp .5s ease both}
+.hero-badge::before{content:'';width:5px;height:5px;background:var(--grn);border-radius:50%;animation:pdot 2s ease infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-title{font-size:clamp(3rem,8vw,6rem);font-weight:700;line-height:.95;letter-spacing:.04em;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;position:relative;animation:fadeUp .5s ease .05s both}
+.hero-title::before,.hero-title::after{content:'GROK';position:absolute;top:0;left:0;width:100%;height:100%}
+.hero-title::before{-webkit-text-fill-color:var(--cy);opacity:0;animation:gl-a 5s ease-in-out infinite;clip-path:polygon(0 0,100% 0,100% 30%,0 30%)}
+.hero-title::after{-webkit-text-fill-color:var(--mag);opacity:0;animation:gl-b 5s ease-in-out infinite;clip-path:polygon(0 70%,100% 70%,100% 100%,0 100%)}
+@keyframes gl-a{0%,90%,100%{opacity:0;transform:translate(0)}92%{opacity:.7;transform:translate(4px,-2px)}94%{opacity:0}96%{opacity:.5;transform:translate(-3px,1px)}98%{opacity:0}}
+@keyframes gl-b{0%,88%,100%{opacity:0;transform:translate(0)}90%{opacity:.6;transform:translate(-4px,2px)}93%{opacity:0}95%{opacity:.4;transform:translate(3px,-1px)}97%{opacity:0}}
+.hero-sub{font-size:clamp(.8rem,1.6vw,1rem);font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--t2);margin-bottom:24px;animation:fadeUp .5s ease .1s both}
+.hero-desc{max-width:500px;font-size:.82rem;line-height:1.7;color:var(--t2);margin-bottom:32px;animation:fadeUp .5s ease .15s both}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;animation:fadeUp .5s ease .2s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;font-family:var(--mono);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;border:2px solid;cursor:pointer;transition:all .15s}
+.btn-mag{background:var(--mag);border-color:var(--mag);color:#fff}
+.btn-mag:hover{background:var(--mag-b);border-color:var(--mag-b);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--mag-d)}
+.btn-cy{background:transparent;border-color:var(--cy-d);color:var(--cy)}
+.btn-cy:hover{background:var(--cy);color:var(--bg-pri);border-color:var(--cy);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--cy-d)}
+.btn-ghost{background:transparent;border-color:var(--brd-sub);color:var(--t2)}
+.btn-ghost:hover{border-color:var(--t2);color:var(--t1);transform:translate(-2px,-2px);box-shadow:4px 4px 0 rgba(139,148,158,.08)}
+
+/* Sections */
+.section{padding:80px 56px}.section-alt{background:var(--bg-deep)}
+.sec-label{display:inline-block;font-size:.55rem;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:var(--mag);margin-bottom:12px;padding:3px 10px;border:1px solid rgba(200,80,192,.3);border-radius:2px}
+.sec-label.cy{color:var(--cy);border-color:rgba(79,195,247,.3)}
+.sec-title{font-size:clamp(1.5rem,3.5vw,2rem);font-weight:700;line-height:1.1;margin-bottom:10px}
+.sec-bar{width:50px;height:2px;background:var(--grad-h);margin-bottom:18px}
+.sec-desc{max-width:480px;font-size:.78rem;line-height:1.7;color:var(--t2);margin-bottom:40px}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.card{padding:24px;background:var(--bg-srf);border:1px solid var(--brd-dim);border-radius:4px;transition:all .15s}
+.card:hover{border-color:var(--mag-d);transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--mag-g)}
+.card-ico{font-size:1.3rem;margin-bottom:10px}
+.card h3{font-size:.82rem;font-weight:700;margin-bottom:6px}
+.card p{font-size:.72rem;line-height:1.6;color:var(--t2)}
+
+/* Install */
+.inst-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.inst-card{background:var(--bg-srf);border:1px solid var(--brd-dim);border-radius:6px;overflow:hidden;transition:border-color .2s}
+.inst-card:hover{border-color:var(--mag-d)}
+.inst-head{padding:12px 16px;background:var(--bg-elv);border-bottom:1px solid var(--brd-dim);display:flex;align-items:center;gap:8px}
+.inst-head h3{font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.inst-head .tag{margin-left:auto;font-size:.5rem;padding:2px 7px;background:var(--mag-g);border:1px solid rgba(200,80,192,.2);color:var(--mag);border-radius:3px;font-weight:600}
+.inst-code{padding:14px;position:relative}
+.inst-code pre{font-family:var(--mono);font-size:.76rem;line-height:1.8;color:var(--cy);white-space:pre-wrap;word-break:break-all}
+.cpy{position:absolute;top:8px;right:8px;background:var(--bg-elv);border:1px solid var(--brd-sub);color:var(--t3);padding:4px 10px;border-radius:3px;cursor:pointer;font-family:var(--mono);font-size:.55rem;letter-spacing:.05em;transition:all .15s}
+.cpy:hover{background:var(--mag);border-color:var(--mag);color:#fff}
+
+/* Table */
+.cmd-table{width:100%;border-collapse:collapse}
+.cmd-table th{text-align:left;padding:8px 12px;font-size:.55rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--t3);border-bottom:1px solid var(--brd-sub)}
+.cmd-table td{padding:10px 12px;font-size:.74rem;border-bottom:1px solid var(--brd-dim);vertical-align:top}
+.cmd-table td:first-child{color:var(--cy);font-weight:500;white-space:nowrap}
+.cmd-table td:last-child{color:var(--t2)}
+.cmd-table tr:hover td{background:var(--bg-hov)}
+
+/* Footer */
+.footer{padding:28px 56px;background:var(--bg-deep);border-top:1px solid var(--brd-dim);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.footer-brand{font-weight:700;font-size:.85rem;letter-spacing:.1em;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.footer-links{display:flex;gap:20px}
+.footer-links a{color:var(--t3);text-decoration:none;font-size:.62rem;letter-spacing:.05em;transition:color .15s}
+.footer-links a:hover{color:var(--cy)}
+.footer-copy{color:var(--t4);font-size:.55rem}
+
+/* ═══ CONSOLE PAGE ═══ */
+.console-page{position:fixed;top:0;left:var(--sb-w);right:0;bottom:0;display:none;flex-direction:column;z-index:50;background:var(--bg-pri)}
+.console-page.active{display:flex}
+.console-topbar{display:flex;align-items:center;padding:0 16px;height:40px;min-height:40px;background:var(--bg-deep);border-bottom:1px solid var(--brd-dim)}
+.console-topbar-title{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--t2)}
+.console-topbar-model{margin-left:auto;font-size:.55rem;color:var(--cy);padding:2px 8px;background:var(--cy-g);border:1px solid rgba(79,195,247,.2);border-radius:3px}
+.console-output{flex:1;overflow-y:auto;padding:14px 18px;font-size:.78rem;line-height:1.7}
+.console-output .line{margin-bottom:2px;white-space:pre-wrap;word-break:break-word}
+.console-output .line-sys{color:var(--t2)}
+.console-output .line-usr{color:var(--grn)}
+.console-output .line-usr::before{content:'❯ ';color:var(--grn)}
+.console-output .line-ai{color:var(--t1)}
+.console-output .line-err{color:#ff6b6b}
+.console-output .line-cmd{color:var(--cy)}
+.console-output .line-brand{background:var(--grad-h);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700}
+.console-output .line-dim{color:var(--t3)}
+.console-output .streaming-cursor{display:inline-block;width:7px;height:14px;background:var(--t1);animation:blink 1s step-end infinite;vertical-align:text-bottom}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.console-input-wrap{display:flex;align-items:center;padding:8px 18px 12px;border-top:1px solid var(--brd-dim);background:var(--bg-deep)}
+.console-prompt{color:var(--grn);font-weight:600;margin-right:8px;user-select:none;font-size:.82rem}
+.console-input{flex:1;background:transparent;border:none;outline:none;color:var(--t1);font-family:var(--mono);font-size:.78rem;caret-color:var(--cy)}
+.console-input::placeholder{color:var(--t4)}
+.console-send{background:var(--mag);border:none;color:#fff;padding:6px 14px;font-family:var(--mono);font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-radius:3px;transition:background .15s}
+.console-send:hover{background:var(--mag-b)}
+.console-send:disabled{opacity:.4;cursor:default}
+
+/* Skills section in console */
+.skills-panel{display:none;flex-direction:column;overflow-y:auto;padding:20px;position:fixed;top:40px;left:var(--sb-w);right:0;bottom:0;background:var(--bg-pri);z-index:51}
+.skills-panel.active{display:flex}
+.skill-card-s{background:var(--bg-srf);border:1px solid var(--brd-dim);border-radius:6px;padding:16px;transition:all .15s}
+.skill-card-s:hover{border-color:var(--mag-d)}
+.skill-card-s .head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.skill-card-s .head .ico{font-size:1.1rem}
+.skill-card-s .head .name{font-size:.78rem;font-weight:700}
+.skill-card-s .head .cat{margin-left:auto;font-size:.45rem;padding:2px 6px;border-radius:2px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.skill-card-s .head .cat.core{color:var(--cy);background:var(--cy-g);border:1px solid rgba(79,195,247,.12)}
+.skill-card-s .head .cat.tools{color:var(--mag);background:var(--mag-g);border:1px solid rgba(200,80,192,.12)}
+.skill-card-s .head .cat.agents{color:var(--grn);background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.12)}
+.skill-card-s .desc{font-size:.68rem;color:var(--t2);line-height:1.5;margin-bottom:10px}
+.skill-toggle{display:flex;align-items:center;gap:8px}
+.skill-sw{position:relative;width:32px;height:16px;background:var(--t4);border-radius:8px;cursor:pointer;transition:background .2s}
+.skill-sw.on{background:var(--grn)}
+.skill-sw::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;background:#fff;border-radius:50%;transition:transform .2s}
+.skill-sw.on::after{transform:translateX(16px)}
+.skill-lbl{font-size:.55rem;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.open{transform:translateX(0)}
+  .mob-tog{display:flex}
+  .main{margin-left:0}
+  .console-page,.skills-panel{left:0}
+  .hero,.section,.footer{padding-left:22px;padding-right:22px}
+  .hero{padding-top:90px;min-height:auto}
+  .inst-grid{grid-template-columns:1fr}
+  .footer{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+<div class="glitch-bar"></div>
+<div class="top-accent"></div>
+
+<button class="mob-tog" onclick="document.querySelector('.sidebar').classList.toggle('open')" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- ═══ SIDEBAR ═══ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-hdr">
+    <img src="/logo.png" alt="GROK CLI">
+    <div class="sb-logo">GROK<small>Command Line Interface</small></div>
+  </div>
+  <div class="sb-nav">
+    <a class="active" data-page="home"><span class="ico">⚡</span> Home <span class="dot"></span></a>
+    <a data-page="console"><span class="ico">▸</span> Console <span class="dot"></span></a>
+    <a data-page="launch"><span class="ico">△</span> Launch <span class="dot"></span></a>
+    <a data-page="launched"><span class="ico">▣</span> Launched <span class="dot"></span></a>
+    <a data-page="skills"><span class="ico">◆</span> Skills <span class="dot"></span></a>
+    <a data-page="home" data-scroll="features"><span class="ico">◎</span> Features <span class="dot"></span></a>
+    <a data-page="home" data-scroll="install"><span class="ico">↓</span> Install <span class="dot"></span></a>
+    <a data-page="home" data-scroll="commands"><span class="ico">/</span> Commands <span class="dot"></span></a>
+    <a data-page="home" data-scroll="models"><span class="ico">⊕</span> Models <span class="dot"></span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="https://github.com/grok-cli" target="_blank">GitHub ↗</a>
+    <a href="https://x.com/GrokAdams" target="_blank">@GrokAdams ↗</a>
+    <a href="https://grokcli.bot" target="_blank">grokcli.bot ↗</a>
+  </div>
+  <div class="sb-status" id="status"><span class="off">● Connecting...</span></div>
+</nav>
+
+<!-- ═══ CONSOLE (overlay) ═══ -->
+<div class="console-page" id="console-page">
+  <div class="console-topbar">
+    <span class="console-topbar-title">Console</span>
+    <span class="console-topbar-model" id="topbar-model">loading...</span>
+  </div>
+  <div class="console-output" id="output"></div>
+  <div class="console-input-wrap">
+    <span class="console-prompt">❯</span>
+    <input class="console-input" id="input" type="text" placeholder="Ask Grok anything..." autocomplete="off" spellcheck="false">
+    <button class="console-send" id="send-btn" onclick="sendMessage()">SEND</button>
+  </div>
+</div>
+
+<!-- ═══ SKILLS PANEL (overlay) ═══ -->
+<div class="skills-panel" id="skills-panel">
+  <div style="margin-bottom:16px">
+    <div class="sec-label" style="margin-bottom:8px">Skills Registry</div>
+    <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:4px">Available Skills</h2>
+    <div class="sec-bar"></div>
+    <p style="font-size:.72rem;color:var(--t2);max-width:420px;line-height:1.6">Skills extend your GROK CLI agent. Toggle them on or off.</p>
+  </div>
+  <div class="grid" id="skills-grid"></div>
+</div>
+
+<!-- ═══ LAUNCH PANEL (overlay) ═══ -->
+<div class="launch-panel" id="launch-panel">
+  <div class="console-topbar">
+    <span class="console-topbar-title">△ GROK Launch — Token Deployer</span>
+    <span class="console-topbar-model" id="launch-queue-badge" style="cursor:pointer" onclick="checkLaunchQueue()">Queue: 0</span>
+  </div>
+  <div class="launch-body" id="launch-body">
+    <div class="launch-output" id="launch-output"></div>
+    <div class="console-input-wrap">
+      <span class="console-prompt" style="color:var(--mag)">△</span>
+      <input class="console-input" id="launch-input" type="text" placeholder="Type here..." autocomplete="off" spellcheck="false">
+      <button class="console-send" id="launch-send" onclick="handleLaunchInput()">SEND</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.launch-panel{position:fixed;top:0;left:var(--sb-w);right:0;bottom:0;display:none;flex-direction:column;z-index:52;background:var(--bg-pri)}
+.launch-panel.active{display:flex}
+.launch-body{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.launch-output{flex:1;overflow-y:auto;padding:14px 18px;font-size:.78rem;line-height:1.7}
+.launch-output .line{margin-bottom:2px;white-space:pre-wrap;word-break:break-word}
+.launch-output .l-sys{color:var(--t2)}.launch-output .l-mag{color:var(--mag)}.launch-output .l-cy{color:var(--cy)}.launch-output .l-grn{color:var(--grn)}.launch-output .l-err{color:#ff6b6b}.launch-output .l-dim{color:var(--t3)}.launch-output .l-yl{color:var(--ylw)}
+.launch-output .l-brand{background:var(--grad-h);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:700}
+.launch-output .receipt{background:var(--bg-srf);border:1px solid var(--brd-dim);border-radius:6px;padding:14px;margin:8px 0;font-size:.74rem;line-height:1.8}
+.launch-output .receipt .rk{color:var(--t3);min-width:100px;display:inline-block}.launch-output .receipt .rv{color:var(--cy)}
+@media(max-width:900px){.launch-panel{left:0}}
+</style>
+
+<!-- ═══ LAUNCHED TOKENS PANEL (overlay) ═══ -->
+<div class="launched-panel" id="launched-panel">
+  <div class="console-topbar">
+    <span class="console-topbar-title">▣ Launched Tokens</span>
+    <span class="console-topbar-model" id="launched-count">0 tokens</span>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:20px">
+    <div style="margin-bottom:16px">
+      <div class="sec-label" style="margin-bottom:8px">Deploy History</div>
+      <h2 style="font-size:1.1rem;font-weight:700;margin-bottom:4px">Tokens launched via GROK CLI</h2>
+      <div class="sec-bar"></div>
+    </div>
+    <div id="launched-list" style="display:flex;flex-direction:column;gap:12px">
+      <div class="line l-dim" style="padding:40px 0;text-align:center">Loading...</div>
+    </div>
+  </div>
+</div>
+
+<style>
+.launched-panel{position:fixed;top:0;left:var(--sb-w);right:0;bottom:0;display:none;flex-direction:column;z-index:53;background:var(--bg-pri)}
+.launched-panel.active{display:flex}
+.tk-card{background:var(--bg-srf);border:1px solid var(--brd-dim);border-radius:6px;padding:16px;transition:border-color .15s}
+.tk-card:hover{border-color:var(--mag-d)}
+.tk-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.tk-img{width:40px;height:40px;border-radius:6px;object-fit:cover;background:var(--bg-elv)}
+.tk-name{font-size:.85rem;font-weight:700}.tk-sym{color:var(--cy);font-size:.72rem;font-weight:600}
+.tk-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.tk-tag{font-size:.55rem;padding:3px 8px;border-radius:3px;font-weight:600;letter-spacing:.05em}
+.tk-tag.mint{color:var(--cy);background:var(--cy-g);border:1px solid rgba(79,195,247,.15)}
+.tk-tag.date{color:var(--t3);background:var(--bg-elv);border:1px solid var(--brd-dim)}
+.tk-links{display:flex;gap:8px;flex-wrap:wrap}
+.tk-link{font-size:.58rem;padding:4px 10px;border-radius:3px;text-decoration:none;font-weight:600;letter-spacing:.04em;transition:all .12s;border:1px solid}
+.tk-link.sol{color:var(--cy);border-color:rgba(79,195,247,.25);background:rgba(79,195,247,.06)}.tk-link.sol:hover{background:var(--cy);color:var(--bg-pri)}
+.tk-link.dex{color:var(--grn);border-color:rgba(0,230,118,.25);background:rgba(0,230,118,.06)}.tk-link.dex:hover{background:var(--grn);color:var(--bg-pri)}
+.tk-link.met{color:var(--mag);border-color:rgba(200,80,192,.25);background:rgba(200,80,192,.06)}.tk-link.met:hover{background:var(--mag);color:#fff}
+.tk-link.tw{color:#1d9bf0;border-color:rgba(29,155,240,.25);background:rgba(29,155,240,.06)}.tk-link.tw:hover{background:#1d9bf0;color:#fff}
+.tk-link.web{color:var(--t2);border-color:var(--brd-sub);background:var(--bg-elv)}.tk-link.web:hover{color:var(--t1);border-color:var(--t3)}
+.tk-none{color:var(--t3);text-align:center;padding:60px 20px;font-size:.78rem}
+@media(max-width:900px){.launched-panel{left:0}}
+</style>
+
+<!-- ═══ MAIN SCROLLABLE WEBSITE ═══ -->
+<main class="main" id="main-home">
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="hero-badge">● LIVE — Try the Console</div>
+    <h1 class="hero-title">GROK</h1>
+    <p class="hero-sub">AI Agent in Your Terminal</p>
+    <p class="hero-desc">A conversational AI CLI tool powered by Grok with intelligent text editor capabilities and tool usage. Ask questions, edit files, run commands — all from a single prompt.</p>
+    <div class="hero-actions">
+      <a class="btn btn-mag" data-page="console" style="cursor:pointer">TRY LIVE CONSOLE</a>
+      <a class="btn btn-cy" data-page="launch" style="cursor:pointer">△ LAUNCH TOKENS</a>
+      <a href="#install" class="btn btn-ghost">INSTALL CLI</a>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" id="features">
+    <div class="sec-label">Capabilities</div>
+    <h2 class="sec-title">Built for developers</h2>
+    <div class="sec-bar"></div>
+    <p class="sec-desc">Everything you need to work faster. Powered by Grok's cutting-edge AI models with deep tool integration.</p>
+    <div class="grid">
+      <div class="card"><div class="card-ico">📝</div><h3>Intelligent Text Editor</h3><p>View, create, and edit files through natural language with smart diff rendering.</p></div>
+      <div class="card"><div class="card-ico">⚡</div><h3>Bash Execution</h3><p>Run shell commands with AI-powered safety confirmations. Auto-approve or review each one.</p></div>
+      <div class="card"><div class="card-ico">🔌</div><h3>MCP Protocol</h3><p>Connect external tools via Model Context Protocol. Extend your agent with custom capabilities.</p></div>
+      <div class="card"><div class="card-ico">🔍</div><h3>Web Search</h3><p>Search the web directly from your terminal. Grok fetches real-time information.</p></div>
+      <div class="card"><div class="card-ico">🤖</div><h3>Streaming Responses</h3><p>Real-time token streaming. See results as they generate — zero lag.</p></div>
+      <div class="card"><div class="card-ico">📋</div><h3>Git Automation</h3><p>AI-generated commit messages and one-command push to remote.</p></div>
+    </div>
+  </section>
+
+  <!-- INSTALL -->
+  <section class="section section-alt" id="install">
+    <div class="sec-label cy">Get Started</div>
+    <h2 class="sec-title">Install in seconds</h2>
+    <div class="sec-bar"></div>
+    <p class="sec-desc">Choose your method. Requires Node.js 18+ and a Grok API key from <a href="https://x.ai" target="_blank" style="color:var(--cy)">x.ai</a>.</p>
+    <div class="inst-grid">
+      <div class="inst-card"><div class="inst-head"><h3>npm</h3><span class="tag">recommended</span></div><div class="inst-code"><pre>npm install -g grokcli</pre><button class="cpy" onclick="copyCode(this)">COPY</button></div></div>
+      <div class="inst-card"><div class="inst-head"><h3>npx</h3><span class="tag">no install</span></div><div class="inst-code"><pre>npx grokcli</pre><button class="cpy" onclick="copyCode(this)">COPY</button></div></div>
+      <div class="inst-card"><div class="inst-head"><h3>Git Clone</h3></div><div class="inst-code"><pre>git clone https://github.com/grok-cli/grok-cli.git
+cd grok-cli && npm install && npm start</pre><button class="cpy" onclick="copyCode(this)">COPY</button></div></div>
+      <div class="inst-card"><div class="inst-head"><h3>API Key</h3></div><div class="inst-code"><pre><span style="color:var(--t3)"># Set your key</span>
+export GROK_API_KEY="xai-your-key"
+
+<span style="color:var(--t3)"># Or pass as flag</span>
+grok serve --api-key xai-your-key</pre><button class="cpy" onclick="copyCode(this)">COPY</button></div></div>
+    </div>
+  </section>
+
+  <!-- COMMANDS -->
+  <section class="section" id="commands">
+    <div class="sec-label">Reference</div>
+    <h2 class="sec-title">Slash Commands</h2>
+    <div class="sec-bar"></div>
+    <div style="overflow-x:auto">
+      <table class="cmd-table">
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody id="cmd-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MODELS -->
+  <section class="section section-alt" id="models">
+    <div class="sec-label cy">AI Models</div>
+    <h2 class="sec-title">Choose your engine</h2>
+    <div class="sec-bar"></div>
+    <p class="sec-desc">Switch models on-the-fly with /model. From lightning-fast code completions to deep reasoning.</p>
+    <div class="grid">
+      <div class="card"><h3><span style="color:var(--mag)">⚡</span> grok-code-fast-1</h3><p>Optimized for coding. 256K context. Fast and accurate for edits and debugging.</p></div>
+      <div class="card"><h3><span style="color:var(--cy)">◎</span> grok-4-latest</h3><p>Flagship reasoning model. 256K context. Best for complex multi-step tasks.</p></div>
+      <div class="card"><h3><span style="color:var(--grn)">▸</span> grok-4-1-fast-reasoning</h3><p>Latest gen. 2M context with reasoning. Fast inference for large codebases.</p></div>
+      <div class="card"><h3><span style="color:var(--ylw)">●</span> grok-3-mini-fast</h3><p>Lightweight and cost-effective. 131K context. Perfect for quick queries.</p></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-brand">GROK CLI</div>
+    <div class="footer-links">
+      <a href="https://github.com/grok-cli/grok-cli" target="_blank">GitHub</a>
+      <a href="https://grokcli.bot" target="_blank">grokcli.bot</a>
+      <a href="https://x.com/GrokAdams" target="_blank">@GrokAdams</a>
+    </div>
+    <div class="footer-copy">MIT License · Powered by Grok</div>
+  </footer>
+</main>
+
+<script>
+// ═══ STATE ═══
+let ws=null,isStreaming=false,streamEl=null,history=[],historyIdx=-1,currentModel='',convMsgs=[];
+const $=id=>document.getElementById(id),output=$('output'),input=$('input');
+
+// ═══ ASCII BANNER ═══
+const BANNER=` ██████  ██████   ██████  ██   ██
+██       ██   ██ ██    ██ ██  ██
+██   ███ ██████  ██    ██ █████
+██    ██ ██   ██ ██    ██ ██  ██
+ ██████  ██   ██  ██████  ██   ██`;
+
+const TIPS=['Tips for getting started:','1. Ask questions, edit files, or run commands.','2. Be specific for the best results.','3. Create GROK.md files to customize your interactions with Grok.','4. /help for more information.','','Install: npm install -g grokcli  ·  GitHub: github.com/grok-cli','','Type your request in natural language. Type /exit to quit.'];
+
+// ═══ OUTPUT HELPERS ═══
+function addLine(t,c=''){const d=document.createElement('div');d.className='line'+(c?' '+c:'');d.textContent=t;output.appendChild(d);output.scrollTop=output.scrollHeight;return d}
+function startStream(){isStreaming=true;streamEl=document.createElement('div');streamEl.className='line line-ai';streamEl.innerHTML='<span class="streaming-cursor"></span>';output.appendChild(streamEl);$('send-btn').disabled=true;return streamEl}
+function appendStream(t){if(!streamEl)return;const c=streamEl.querySelector('.streaming-cursor');if(c)c.remove();streamEl.textContent+=t;const n=document.createElement('span');n.className='streaming-cursor';streamEl.appendChild(n);output.scrollTop=output.scrollHeight}
+function endStream(){if(streamEl){const c=streamEl.querySelector('.streaming-cursor');if(c)c.remove()}isStreaming=false;streamEl=null;$('send-btn').disabled=false;input.focus()}
+
+// ═══ BOOT ═══
+function bootConsole(){
+  addLine('🤖 Starting Grok CLI Conversational Assistant...','line-sys');addLine('','line-sys');
+  const b=addLine('','line-brand');b.style.whiteSpace='pre';b.style.lineHeight='1.2';b.textContent=BANNER;
+  addLine('','line-sys');TIPS.forEach(t=>addLine(t,'line-dim'));addLine('','line-sys');
+}
+
+// ═══ SLASH COMMANDS ═══
+function handleSlash(cmd){
+  const p=cmd.trim().split(/\s+/),b=p[0].toLowerCase(),a=p.slice(1).join(' ');
+  switch(b){
+    case'/help':addLine('Commands: /help /model /models /skills /clear /compact /search /version /exit','line-cmd');return true;
+    case'/skills':showPage('skills');addLine('Switched to Skills','line-cmd');return true;
+    case'/clear':output.innerHTML='';convMsgs=[];bootConsole();addLine('✓ Cleared','line-cmd');return true;
+    case'/models':addLine('Available models:','line-cmd');fetch('/api/models').then(r=>r.json()).then(d=>{d.models.forEach(m=>{addLine(`  ${m.id===currentModel?'●':'○'} ${m.id} (${m.ctx})`,m.id===currentModel?'line-cmd':'line-dim')})});return true;
+    case'/model':if(!a){addLine('Usage: /model <name>','line-err');return true}currentModel=a;$('topbar-model').textContent=a;if(ws&&ws.readyState===1)ws.send(JSON.stringify({type:'set_model',model:a}));addLine(`✓ Model → ${a}`,'line-cmd');return true;
+    case'/compact':if(convMsgs.length>4){convMsgs=[{role:'system',content:'Previous conversation compacted.'},...convMsgs.slice(-4)];addLine('✓ Compacted','line-cmd')}else addLine('Nothing to compact','line-dim');return true;
+    case'/search':if(!a){addLine('Usage: /search <query>','line-err');return true}convMsgs.push({role:'user',content:`Search: ${a}`});addLine(a,'line-usr');startStream();ws.send(JSON.stringify({type:'chat',messages:convMsgs,searchMode:'on'}));return true;
+    case'/version':addLine('GROK CLI v0.1.0','line-cmd');return true;
+    case'/exit':addLine('Goodbye! 👋','line-cmd');return true;
+    default:return false;
+  }
+}
+
+// ═══ SEND ═══
+function sendMessage(){
+  const t=input.value.trim();if(!t||isStreaming)return;input.value='';history.unshift(t);historyIdx=-1;
+  if(t.startsWith('/')&&handleSlash(t))return;
+  addLine(t,'line-usr');convMsgs.push({role:'user',content:t});
+  if(!ws||ws.readyState!==1){addLine('Not connected. Reconnecting...','line-err');connectWS();return}
+  startStream();ws.send(JSON.stringify({type:'chat',messages:convMsgs}));
+}
+
+// ═══ WEBSOCKET ═══
+function connectWS(){
+  const p=location.protocol==='https:'?'wss':'ws';ws=new WebSocket(`${p}://${location.host}/ws`);
+  ws.onopen=()=>{$('status').innerHTML='<span class="on">● Connected</span>'};
+  ws.onmessage=e=>{const m=JSON.parse(e.data);
+    if(m.type==='delta')appendStream(m.content);
+    else if(m.type==='done'){if(streamEl)convMsgs.push({role:'assistant',content:streamEl.textContent});endStream()}
+    else if(m.type==='error'){endStream();addLine(m.content,'line-err')}
+    else if(m.type==='model_changed'){currentModel=m.model;$('topbar-model').textContent=m.model}
+  };
+  ws.onclose=()=>{$('status').innerHTML='<span class="off">● Disconnected</span>';endStream();setTimeout(connectWS,3000)};
+  ws.onerror=()=>{$('status').innerHTML='<span class="off">● Error</span>'};
+}
+
+// ═══ PAGE SWITCHING ═══
+function showPage(name){
+  $('console-page').classList.remove('active');
+  $('skills-panel').classList.remove('active');
+  $('launch-panel').classList.remove('active');
+  $('launched-panel').classList.remove('active');
+  $('main-home').style.display='';
+  document.querySelectorAll('.sb-nav a').forEach(a=>a.classList.remove('active'));
+  const link=document.querySelector(`.sb-nav a[data-page="${name}"]`);
+  if(link)link.classList.add('active');
+  if(name==='console'){$('console-page').classList.add('active');$('main-home').style.display='none';input.focus()}
+  else if(name==='skills'){$('skills-panel').classList.add('active');$('console-page').classList.add('active');$('main-home').style.display='none'}
+  else if(name==='launch'){$('launch-panel').classList.add('active');$('main-home').style.display='none';if(!launchBooted){bootLaunchWizard();launchBooted=true}$('launch-input').focus()}
+  else if(name==='launched'){$('launched-panel').classList.add('active');$('main-home').style.display='none';loadLaunchedTokens()}
+  document.querySelector('.sidebar').classList.remove('open');
+}
+
+// Nav clicks
+document.querySelectorAll('.sb-nav a').forEach(a=>{
+  a.addEventListener('click',()=>{
+    const page=a.dataset.page;
+    const scroll=a.dataset.scroll;
+    showPage(page);
+    if(scroll&&page==='home'){
+      setTimeout(()=>{const el=document.getElementById(scroll);if(el)el.scrollIntoView({behavior:'smooth'})},50);
+    }
+  });
+});
+
+// Hero button
+document.querySelectorAll('[data-page="console"],[data-page="launch"],[data-page="launched"]').forEach(el=>{
+  el.addEventListener('click',e=>{e.preventDefault();showPage(el.dataset.page)});
+});
+
+// ═══ INPUT ═══
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();sendMessage()}
+  if(e.key==='ArrowUp'){e.preventDefault();if(history.length&&historyIdx<history.length-1){historyIdx++;input.value=history[historyIdx]}}
+  if(e.key==='ArrowDown'){e.preventDefault();if(historyIdx>0){historyIdx--;input.value=history[historyIdx]}else{historyIdx=-1;input.value=''}}
+  if(e.key==='l'&&e.ctrlKey){e.preventDefault();output.innerHTML='';bootConsole()}
+  if(e.key==='c'&&e.ctrlKey&&isStreaming){endStream();addLine('^C','line-dim')}
+  if(e.key==='Tab'){e.preventDefault();const v=input.value;if(v.startsWith('/')){const cmds=['/help','/model','/models','/skills','/clear','/compact','/search','/version','/exit'];const m=cmds.filter(c=>c.startsWith(v));if(m.length===1)input.value=m[0]+' ';else if(m.length>1)addLine('  '+m.join('  '),'line-dim')}}
+});
+
+// ═══ LOAD DATA ═══
+async function loadSkills(){try{const r=await fetch('/api/skills');const d=await r.json();const g=$('skills-grid');g.innerHTML='';d.skills.forEach(s=>{g.innerHTML+=`<div class="skill-card-s"><div class="head"><span class="ico">${s.icon}</span><span class="name">${s.name}</span><span class="cat ${s.category}">${s.category}</span></div><div class="desc">${s.desc}</div><div class="skill-toggle"><div class="skill-sw ${s.enabled?'on':''}" onclick="this.classList.toggle('on');this.nextElementSibling.textContent=this.classList.contains('on')?'Enabled':'Disabled'"></div><span class="skill-lbl">${s.enabled?'Enabled':'Disabled'}</span></div></div>`})}catch(e){}}
+
+async function loadCommands(){try{const r=await fetch('/api/commands');const d=await r.json();const t=$('cmd-tbody');t.innerHTML='';d.commands.forEach(c=>{t.innerHTML+=`<tr><td>${c.cmd}</td><td>${c.desc}</td></tr>`})}catch(e){}}
+
+async function loadConfig(){try{const r=await fetch('/api/config');const c=await r.json();currentModel=c.model;$('topbar-model').textContent=c.model}catch(e){}}
+
+function copyCode(b){const p=b.parentElement.querySelector('pre');navigator.clipboard.writeText(p.textContent).then(()=>{b.textContent='COPIED!';b.style.background='#00e676';b.style.borderColor='#00e676';b.style.color='#000';setTimeout(()=>{b.textContent='COPY';b.style.background='';b.style.borderColor='';b.style.color=''},1500)})}
+
+// ═══ LAUNCH WIZARD ═══
+let launchBooted=false;
+let launchStep=0; // 0=idle, 1=askName, 2=askSymbol, 3=askTwitter, 4=askWeb, 5=askImage, 6=confirm, 7=done
+let launchData={name:'',symbol:'',twitter:'',website:'',imageUrl:'',quote:'SOL'};
+const lout=$('launch-output');
+const linp=$('launch-input');
+
+function lLine(t,c=''){const d=document.createElement('div');d.className='line'+(c?' '+c:'');d.textContent=t;lout.appendChild(d);lout.scrollTop=lout.scrollHeight;return d}
+function lHTML(h,c=''){const d=document.createElement('div');d.className='line'+(c?' '+c:'');d.innerHTML=h;lout.appendChild(d);lout.scrollTop=lout.scrollHeight;return d}
+
+function bootLaunchWizard(){
+  lLine('△ GROK Launch — Solana Token Deployer','l-brand');
+  lLine('────────────────────────────────────────','l-dim');
+  lLine('Deploy tokens on Solana via Meteora bonding curves.','l-sys');
+  lLine('Your token gets a vanity address and auto-liquidity.','l-sys');
+  lLine('','');
+  lLine('Commands: /launch  /launch-status  /launch-history  /help','l-dim');
+  lLine('','');
+  lLine('Would you like to launch a token? (yes/no)','l-mag');
+  launchStep=0.5; // waiting for Y/N to start
+}
+
+function handleLaunchInput(){
+  const raw=linp.value.trim();if(!raw)return;linp.value='';
+  const t=raw.toLowerCase();
+  lLine(raw,'line-usr');
+
+  // Slash commands from launch panel
+  if(raw.startsWith('/')){
+    if(raw==='/launch'){launchStep=0.5;lLine('Would you like to launch a token? (yes/no)','l-mag');return}
+    if(raw==='/launch-status'){checkLaunchQueue();return}
+    if(raw==='/launch-history'){showLaunchHistory();return}
+    if(raw==='/help'){lLine('Commands: /launch, /launch-status, /launch-history','l-cy');return}
+    if(raw==='/clear'){lout.innerHTML='';launchStep=0;bootLaunchWizard();return}
+    lLine('Unknown command. Try /help','l-err');return;
+  }
+
+  // State machine
+  if(launchStep===0.5){
+    if(t==='yes'||t==='y'){launchStep=1;launchData={name:'',symbol:'',twitter:'',website:'',imageUrl:'',quote:'SOL'};lLine('','');lLine('Step 1/5 — Token Name:','l-mag');lLine('Enter the name for your token (e.g., "Grok Coin")','l-dim')}
+    else if(t==='no'||t==='n'){lLine('No problem! Type /launch whenever you\'re ready.','l-sys');launchStep=0}
+    else{lLine('Please type yes or no.','l-yl')}
+    return;
+  }
+
+  if(launchStep===1){
+    if(raw.length>32){lLine('Name too long (max 32 chars). Try again:','l-err');return}
+    if(raw.length<1){lLine('Name can\'t be empty. Try again:','l-err');return}
+    launchData.name=raw;lLine(`✓ Name: ${raw}`,'l-grn');lLine('','');
+    lLine('Step 2/5 — Token Symbol / Ticker:','l-mag');lLine('Enter the ticker (e.g., "$GROK")','l-dim');
+    launchStep=2;return;
+  }
+
+  if(launchStep===2){
+    const sym=raw.replace(/^\$/,'').toUpperCase();
+    if(sym.length>10){lLine('Symbol too long (max 10 chars). Try again:','l-err');return}
+    if(sym.length<1){lLine('Symbol can\'t be empty. Try again:','l-err');return}
+    launchData.symbol=sym;lLine(`✓ Symbol: $${sym}`,'l-grn');lLine('','');
+    lLine('Step 3/5 — Twitter/X URL (optional):','l-mag');lLine('Enter X/Twitter URL or type "skip"','l-dim');
+    launchStep=3;return;
+  }
+
+  if(launchStep===3){
+    if(t!=='skip'&&t!==''){launchData.twitter=raw;lLine(`✓ Twitter: ${raw}`,'l-grn')}else{lLine('⏭ Skipped','l-dim')}
+    lLine('','');lLine('Step 4/5 — Website URL (optional):','l-mag');lLine('Enter website URL or type "skip"','l-dim');
+    launchStep=4;return;
+  }
+
+  if(launchStep===4){
+    if(t!=='skip'&&t!==''){launchData.website=raw;lLine(`✓ Website: ${raw}`,'l-grn')}else{lLine('⏭ Skipped','l-dim')}
+    lLine('','');lLine('Step 5/5 — Token Image URL (optional):','l-mag');lLine('Enter image URL (.jpg/.png) or type "skip"','l-dim');
+    launchStep=5;return;
+  }
+
+  if(launchStep===5){
+    if(t!=='skip'&&t!==''){
+      if(!raw.match(/\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i)&&!raw.startsWith('http')){lLine('Invalid image URL. Must be a direct link to .jpg/.png/.gif. Try again or type "skip":','l-err');return}
+      launchData.imageUrl=raw;lLine(`✓ Image: ${raw}`,'l-grn');
+    }else{lLine('⏭ Using default image','l-dim')}
+    lLine('','');
+
+    // Show receipt
+    lLine('═══════════ LAUNCH RECEIPT ═══════════','l-brand');
+    lHTML(`<div class="receipt"><span class="rk">Name:</span> <span class="rv">${launchData.name}</span><br><span class="rk">Symbol:</span> <span class="rv">$${launchData.symbol}</span><br><span class="rk">Twitter:</span> <span class="rv">${launchData.twitter||'—'}</span><br><span class="rk">Website:</span> <span class="rv">${launchData.website||'—'}</span><br><span class="rk">Image:</span> <span class="rv">${launchData.imageUrl||'default'}</span><br><span class="rk">Quote:</span> <span class="rv">SOL (Meteora)</span></div>`);
+    lLine('','');
+    lLine('Are you sure you want to launch this token? (yes/no)','l-yl');
+    launchStep=6;return;
+  }
+
+  if(launchStep===6){
+    if(t==='yes'||t==='y'){
+      lLine('','');lLine('⏳ Submitting to launch queue...','l-mag');
+      submitLaunch();
+      launchStep=7;
+    }else if(t==='no'||t==='n'){
+      lLine('Launch cancelled. Type /launch to start over.','l-sys');launchStep=0;
+    }else{lLine('Please type yes or no.','l-yl')}
+    return;
+  }
+
+  if(launchStep===7){
+    lLine('Launch in progress... please wait. Type /launch-status to check.','l-dim');return;
+  }
+
+  // Default: idle
+  lLine('Type /launch to start the token launcher.','l-dim');
+}
+
+async function submitLaunch(){
+  try{
+    const res=await fetch('/api/launch/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(launchData)});
+    const data=await res.json();
+    if(!res.ok){lLine(`❌ Error: ${data.error}`,'l-err');launchStep=0;return}
+    lLine(`✅ Queued! Job ID: ${data.jobId}`,'l-grn');
+    lLine(`📋 Position in queue: ${data.queuePosition}`,'l-sys');
+    if(data.queuePosition>1)lLine(`⏱ Estimated wait: ~${data.estimatedWaitSeconds}s`,'l-sys');
+    else lLine('🔨 Deploying now...','l-mag');
+    lLine(`🔑 Vanity keys remaining: ${data.keypairsRemaining}`,'l-dim');
+    pollJob(data.jobId);
+  }catch(e){lLine(`❌ Network error: ${e.message}`,'l-err');launchStep=0}
+}
+
+async function pollJob(jobId){
+  let attempts=0;const maxAttempts=60;
+  const poll=async()=>{
+    try{
+      const res=await fetch(`/api/launch/job/${jobId}`);const d=await res.json();
+      if(d.status==='completed'&&d.result){
+        lLine('','');lLine('═══════════ ✓ TOKEN LAUNCHED! ═══════════','l-brand');
+        const m=d.result.baseMint||'';
+        lHTML(`<div class="receipt"><span class="rk">Token:</span> <span class="rv">${launchData.name} ($${launchData.symbol})</span><br><span class="rk">Contract:</span> <span class="rv" style="font-size:.65rem;word-break:break-all">${m}</span><br><span class="rk">Tx:</span> <span class="rv" style="font-size:.65rem">${(d.result.signature||'').slice(0,40)}...</span><br><br><span class="rk">Links:</span><br>&nbsp;&nbsp;<a href="https://solscan.io/token/${m}" target="_blank" style="color:var(--cy)">▸ Solscan ↗</a><br>&nbsp;&nbsp;<a href="https://dexscreener.com/solana/${m}" target="_blank" style="color:var(--grn)">▸ DexScreener ↗</a><br>${d.result.pool?'&nbsp;&nbsp;<a href="https://app.meteora.ag/pools/'+d.result.pool+'" target="_blank" style="color:var(--mag)">▸ Meteora Pool ↗</a><br>':''}&nbsp;&nbsp;<a href="https://solscan.io/tx/${d.result.signature||''}" target="_blank" style="color:var(--t2)">▸ Transaction ↗</a></div>`);
+        lLine('','');lLine('View all tokens in the Launched tab. Type /launch to deploy another!','l-dim');
+        launchStep=0;return;
+      }
+      if(d.status==='failed'){lLine(`❌ Launch failed: ${d.error}`,'l-err');launchStep=0;return}
+      attempts++;
+      if(attempts<maxAttempts)setTimeout(poll,2500);
+      else{lLine('⏱ Timeout polling — check /launch-status','l-yl');launchStep=0}
+    }catch(e){attempts++;if(attempts<maxAttempts)setTimeout(poll,3000);else launchStep=0}
+  };
+  setTimeout(poll,3000);
+}
+
+async function checkLaunchQueue(){
+  try{const r=await fetch('/api/launch/status');const d=await r.json();
+    lLine(`Queue: ${d.queueLength} | Processing: ${d.isProcessing?'yes':'no'} | Wait: ~${d.estimatedWaitSeconds}s`,'l-cy');
+    $('launch-queue-badge').textContent=`Queue: ${d.queueLength}`;
+  }catch(e){lLine('Failed to check queue','l-err')}
+}
+
+async function showLaunchHistory(){
+  try{const r=await fetch('/api/launch/history');const d=await r.json();
+    if(d.length===0){lLine('No launches yet.','l-dim');return}
+    lLine('Recent launches:','l-cy');
+    d.slice(0,5).forEach(l=>{lLine(`  ${l.symbol} — ${l.baseMint?.slice(0,12)}... (${new Date(l.createdAt).toLocaleString()})`,'l-dim')});
+  }catch(e){lLine('Failed to fetch history','l-err')}
+}
+
+// Launch input event handler
+$('launch-input').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();handleLaunchInput()}});
+
+// Listen for WS launch updates
+function setupLaunchWSListener(){
+  // The WS is already connected for chat; we intercept launch_update messages
+  const origOnMsg=ws?.onmessage;
+  if(ws)ws.addEventListener('message',e=>{
+    try{const m=JSON.parse(e.data);
+      if(m.type==='launch_update'){
+        $('launch-queue-badge').textContent=`Queue: ${m.job.queueLength}`;
+      }
+    }catch{}
+  });
+}
+setTimeout(setupLaunchWSListener,2000);
+
+// Also handle /launch from console
+const origHandleSlash=handleSlash;
+handleSlash=function(cmd){
+  if(cmd.trim().toLowerCase()==='/launch'){showPage('launch');addLine('Switched to Launch module','line-cmd');return true}
+  if(cmd.trim().toLowerCase()==='/launch-status'){showPage('launch');checkLaunchQueue();return true}
+  return origHandleSlash(cmd);
+};
+
+// ═══ LAUNCHED TOKENS VIEWER ═══
+async function loadLaunchedTokens(){
+  const list=$('launched-list');
+  list.innerHTML='<div class="line l-dim" style="padding:40px 0;text-align:center">Loading...</div>';
+  try{
+    const r=await fetch('/api/launch/history');
+    const tokens=await r.json();
+    $('launched-count').textContent=`${tokens.length} token${tokens.length!==1?'s':''}`;
+    if(tokens.length===0){list.innerHTML='<div class="tk-none">No tokens launched yet.<br>Go to the <strong>Launch</strong> tab to deploy your first token.</div>';return}
+    list.innerHTML='';
+    tokens.forEach(tk=>{
+      const date=tk.createdAt?new Date(tk.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      const mint=tk.baseMint||'';
+      const short=mint.slice(0,6)+'...'+mint.slice(-4);
+      const imgSrc=tk.imageUrl&&tk.imageUrl.startsWith('http')?tk.imageUrl:'';
+      
+      let linksHTML='';
+      if(mint)linksHTML+=`<a class="tk-link sol" href="https://solscan.io/token/${mint}" target="_blank">Solscan ↗</a>`;
+      if(mint)linksHTML+=`<a class="tk-link dex" href="https://dexscreener.com/solana/${mint}" target="_blank">DexScreener ↗</a>`;
+      if(tk.pool)linksHTML+=`<a class="tk-link met" href="https://app.meteora.ag/pools/${tk.pool}" target="_blank">Meteora ↗</a>`;
+      if(tk.twitter)linksHTML+=`<a class="tk-link tw" href="${tk.twitter.startsWith('http')?tk.twitter:'https://x.com/'+tk.twitter}" target="_blank">𝕏 ↗</a>`;
+      if(tk.website)linksHTML+=`<a class="tk-link web" href="${tk.website.startsWith('http')?tk.website:'https://'+tk.website}" target="_blank">Web ↗</a>`;
+      if(tk.signature)linksHTML+=`<a class="tk-link sol" href="https://solscan.io/tx/${tk.signature}" target="_blank" style="opacity:.6">Tx ↗</a>`;
+
+      list.innerHTML+=`<div class="tk-card">
+        <div class="tk-top">
+          ${imgSrc?`<img class="tk-img" src="${imgSrc}" onerror="this.style.display='none'" alt="">`:'<div class="tk-img" style="display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--t3)">△</div>'}
+          <div><div class="tk-name">${tk.name||'Unknown'}</div><div class="tk-sym">$${tk.symbol||'???'}</div></div>
+        </div>
+        <div class="tk-meta">
+          <span class="tk-tag mint" title="${mint}">${short}</span>
+          <span class="tk-tag date">${date}</span>
+          ${tk.quote?`<span class="tk-tag date">${tk.quote}</span>`:''}
+        </div>
+        <div class="tk-links">${linksHTML}</div>
+      </div>`;
+    });
+  }catch(e){list.innerHTML=`<div class="tk-none">Failed to load tokens: ${e.message}</div>`}
+}
+
+// ═══ INIT ═══
+bootConsole();connectWS();loadSkills();loadCommands();loadConfig();
+</script>
+</body>
+</html>
