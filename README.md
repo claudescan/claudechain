@@ -1,261 +1,128 @@
-<p align="center">
-  <img src="assets/banner.svg" alt="GROK CLI" width="100%">
-</p>
+# ClaudeScan
 
-<p align="center">
-  <a href="https://www.npmjs.com/package/grokcli"><img src="https://img.shields.io/npm/v/grokcli?style=flat-square&color=c850c0&label=npm" alt="npm version"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-4fc3f7?style=flat-square" alt="MIT License"></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D18-00e676?style=flat-square" alt="Node 18+"></a>
-  <a href="https://x.com/GrokAdams"><img src="https://img.shields.io/badge/𝕏-@GrokAdams-8b949e?style=flat-square" alt="X"></a>
-  <a href="https://grokcli.bot"><img src="https://img.shields.io/badge/web-grokcli.bot-c850c0?style=flat-square" alt="Website"></a>
-</p>
+> Claude Chain Blockchain Explorer for $CCH Token
 
-<p align="center">
-  <strong>AI agent terminal + Solana token launcher — powered by <a href="https://x.ai">Grok</a></strong><br>
-  <sub>Ask questions · Edit files · Run commands · Launch tokens · All from one prompt.</sub>
-</p>
+![ClaudeScan](https://claudescan.io/preview.png)
 
----
+## 🔗 Contract Address
 
-## Quick Start
+```
+zvDFbTf9wf4paJrKZs7pJ3xbvWW9QcXdsspSXthdCCH
+```
+
+## ✨ Features
+
+- **Real-time Transactions** — Live $CCH transaction tracking
+- **AI Agents Dashboard** — Monitor autonomous agents on Claude Chain
+- **Price Tracking** — Live $CCH price from DexScreener
+- **Account Explorer** — View balances and transaction history
+- **Agent Chat** — Interact with AI agents (Claude API powered)
+- **Mobile Responsive** — Works on all devices
+
+## 🚀 Quick Start
 
 ```bash
-# Install globally
-npm install -g grokcli
-
-# Or run directly (no install)
-npx grokcli
-
-# Set your Grok API key
-export GROK_API_KEY="xai-your-key-here"
-
-# Start
-grok serve
-```
-
-> Get your API key free at **[x.ai](https://x.ai)** → API → Create Key
-
----
-
-## Preview
-
-<p align="center">
-  <img src="assets/screenshot.svg" alt="GROK CLI Terminal" width="100%">
-</p>
-
----
-
-## Features
-
-| | Feature | Description |
-|:--|:--|:--|
-| **▸** | **AI Console** | Chat with Grok models in real-time with WebSocket streaming |
-| **△** | **Token Launcher** | Deploy Solana tokens on Meteora with one command |
-| **📝** | **Text Editor** | View, create, edit files through natural language |
-| **⚡** | **Bash Execution** | Run shell commands with AI safety confirmation |
-| **🔍** | **Web Search** | Real-time web search powered by Grok |
-| **🔌** | **MCP Protocol** | Connect external tools via Model Context Protocol |
-| **🌿** | **Git Operations** | AI-powered commit messages, staging, push |
-| **📋** | **14 Skills** | Extensible skills engine — code review, debug, refactor, docs, tests |
-
----
-
-## Token Launcher
-
-Launch Solana SPL tokens directly from the terminal — no wallet connection required. Server-side deployment via Meteora bonding curves.
-
-<p align="center">
-  <img src="assets/launch-wizard.svg" alt="GROK Launch Wizard" width="100%">
-</p>
-
-```
-/launch          → Start the wizard
-  Step 1: Name       (required)
-  Step 2: Symbol     (required)
-  Step 3: Twitter    (optional — type "skip")
-  Step 4: Website    (optional — type "skip")
-  Step 5: Image URL  (optional — type "skip")
-  → Review receipt → Confirm → Deployed!
-```
-
-After launch, you get:
-- **Contract address** (mint)
-- **Solscan** explorer link
-- **DexScreener** chart link
-- **Meteora** pool link
-
-Queue system handles concurrent launches — multiple users can deploy simultaneously.
-
----
-
-## Installation
-
-### npm (recommended)
-
-```bash
-npm install -g grokcli
-```
-
-### npx (no install)
-
-```bash
-npx grokcli
-```
-
-### Git Clone
-
-```bash
-git clone https://github.com/grok-cli/grok-cli.git
-cd grok-cli
+# Install dependencies
 npm install
-npm start
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-### Bun
+## ⚙️ Environment Variables
+
+Create `.env` from `.env.example`:
 
 ```bash
-bun install -g grokcli
+cp .env.example .env
 ```
 
----
+### Required Variables
 
-## Configuration
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | API endpoint (default: https://api.claudescan.io) |
+| `VITE_SOLANA_RPC` | Solana RPC endpoint |
 
-Create a `.env` file or set environment variables:
+### For AI Agent Chat
 
-```env
-# Required — Grok AI
-GROK_API_KEY=xai-your-api-key
+| Variable | Description |
+|----------|-------------|
+| `ANTHROPIC_API_KEY` | Claude API key (sk-ant-api03-...) |
 
-# Optional — Model selection
-GROK_MODEL=grok-3-fast
-PORT=8080
+## 📦 Deploy to Render
 
-# Optional — Token Launcher
-WALLET_SECRET=your-base58-wallet-key
-PINATA_JWT=your-pinata-jwt
-SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
-```
+### One-Click Deploy
 
-### CLI Flags
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-```bash
-grok serve                          # Start with defaults
-grok serve --port 3000              # Custom port
-grok serve --api-key xai-xxx        # Pass key directly
-grok version                        # Show version
-```
+### Manual Setup
 
----
+1. Create **Static Site** on Render
+2. Connect GitHub repo
+3. Configure:
+   - Build Command: `npm install && npm run build`
+   - Publish Directory: `dist`
+4. Add environment variables
+5. Deploy!
 
-## Commands
-
-| Command | Description |
-|:--|:--|
-| `/help` | Show all commands |
-| `/launch` | Open token launcher wizard |
-| `/launch-status` | Check deployment queue |
-| `/model <name>` | Switch AI model |
-| `/models` | List available models |
-| `/skills` | Show skills registry |
-| `/search <query>` | Web search via Grok |
-| `/clear` | Clear conversation |
-| `/compact` | Compress context window |
-| `/version` | Show version |
-
----
-
-## Models
-
-Switch models on-the-fly with `/model`:
-
-| Model | Context | Speed |
-|:--|:--|:--|
-| `grok-4-1-fast-reasoning` | 2M | ⚡ fast |
-| `grok-4-fast-reasoning` | 2M | ⚡ fast |
-| `grok-4` | 256K | normal |
-| `grok-4-latest` | 256K | normal |
-| `grok-code-fast-1` | 256K | ⚡ fast |
-| `grok-3` | 131K | normal |
-| `grok-3-fast` | 131K | ⚡ fast |
-| `grok-3-mini-fast` | 131K | ⚡⚡ fastest |
-
----
-
-## Deploy to Render
-
-One-click cloud deployment:
-
-1. Push to GitHub
-2. Connect repo on [render.com](https://render.com)
-3. Auto-detects `render.yaml`
-4. Set environment variables:
-   - `GROK_API_KEY` — your Grok key
-   - `WALLET_SECRET` — deployer wallet (for launcher)
-   - `PINATA_JWT` — Pinata token (for launcher)
-   - `SOLANA_RPC_URL` — Helius/other RPC
-5. Deploy → live at your custom domain
-
-The `render.yaml` includes a 1GB persistent disk at `/data` for vanity keypairs and launch history.
-
-### Docker
-
-```bash
-docker build -t grokcli .
-docker run -p 8080:8080 \
-  -e GROK_API_KEY=xai-xxx \
-  -e WALLET_SECRET=xxx \
-  -e PINATA_JWT=xxx \
-  grokcli
-```
-
----
-
-## Project Structure
+## 🏗️ Project Structure
 
 ```
-grok-cli/
-├── server.js            # Express + WebSocket server
-├── package.json         # Dependencies & scripts
-├── render.yaml          # Render deployment config
-├── Dockerfile           # Container deployment
-├── .env.example         # Environment template
-├── bin/
-│   └── grok.js          # CLI entry point
+claudescan/
+├── src/
+│   ├── components/
+│   │   ├── Navbar/         # Navigation + contract badge
+│   │   └── Footer/         # Footer + contract display
+│   ├── pages/
+│   │   ├── HomePage/       # Main dashboard
+│   │   └── index.tsx       # All other pages
+│   ├── services/
+│   │   └── api.ts          # Solana + API integration
+│   ├── config.ts           # App configuration
+│   ├── App.tsx             # Main app
+│   └── main.tsx            # Entry point
 ├── public/
-│   ├── index.html       # Web terminal (Console, Launch, Skills)
-│   └── logo.png         # Pixel mascot
-└── assets/
-    ├── banner.svg       # GitHub banner
-    ├── screenshot.svg   # Terminal preview
-    └── launch-wizard.svg
+│   └── claude-chain-logo.svg
+├── .env.example
+├── render.yaml
+└── package.json
 ```
 
+## 🔌 API Endpoints
+
+The explorer expects these endpoints from the backend:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /stats` | Network statistics |
+| `GET /transactions` | Transaction list |
+| `GET /tx/:signature` | Transaction details |
+| `GET /account/:address` | Account info |
+| `GET /agents` | AI agents list |
+| `GET /agent/:address` | Agent details |
+
+## 🎨 Branding
+
+- **Token:** $CCH (Claude Chain)
+- **Contract:** `zvDFbTf9wf4paJrKZs7pJ3xbvWW9QcXdsspSXthdCCH`
+- **Colors:** Purple (#8b5cf6) + Dark theme
+- **Domain:** claudescan.io
+
+## 📊 Links
+
+- [DexScreener](https://dexscreener.com/solana/zvDFbTf9wf4paJrKZs7pJ3xbvWW9QcXdsspSXthdCCH)
+- [Birdeye](https://birdeye.so/token/zvDFbTf9wf4paJrKZs7pJ3xbvWW9QcXdsspSXthdCCH)
+- [Jupiter](https://jup.ag/swap/SOL-zvDFbTf9wf4paJrKZs7pJ3xbvWW9QcXdsspSXthdCCH)
+- [Solscan](https://solscan.io/token/zvDFbTf9wf4paJrKZs7pJ3xbvWW9QcXdsspSXthdCCH)
+
+## 📜 License
+
+MIT © Claude Chain
+
 ---
 
-## Tech Stack
-
-- **Runtime**: Node.js 18+
-- **Server**: Express 4 + WebSocket (ws)
-- **AI**: Grok via OpenAI SDK (x.ai API)
-- **Blockchain**: Solana Web3.js + Meteora Dynamic Bonding Curve SDK
-- **Storage**: Pinata (IPFS) for token metadata
-- **Frontend**: Vanilla JS, single-file SPA
-- **Deploy**: Render / Docker / npm
-
----
-
-## Links
-
-- **Website**: [grokcli.bot](https://grokcli.bot)
-- **npm**: [npmjs.com/package/grokcli](https://www.npmjs.com/package/grokcli)
-- **GitHub**: [github.com/grok-cli](https://github.com/grok-cli)
-- **𝕏**: [@GrokAdams](https://x.com/GrokAdams)
-- **Grok API**: [x.ai](https://x.ai)
-
----
-
-<p align="center">
-  <img src="assets/logo.png" alt="GROK" width="48" style="border-radius:8px"><br>
-  <sub>MIT License · Built with Grok</sub>
-</p>
+**Contract Address:** `zvDFbTf9wf4paJrKZs7pJ3xbvWW9QcXdsspSXthdCCH`
